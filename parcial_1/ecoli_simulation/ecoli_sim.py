@@ -1,4 +1,4 @@
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, PillowWriter
 import random
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +26,7 @@ class LeakyIntegrator:
 
 
 def create_environment(size, noise_level=0.1, num_shades=5):
-    env = np.zeros((size, size))
+    env = np.zeros((size, size), dtype=float)
     center = size // 2
     max_concentration = 1.0
 
@@ -92,17 +92,17 @@ def run_simulation(env_size, a, b, threshold, noise_level=0.1,
                                                   position[1]))
 
     angle = random.uniform(0, 2 * np.pi)  # Start with a random direction
-    path = [tuple(position)]
 
-    X_values = []
-    V_values = []
-    U_values = []
+    path = [tuple(position)]
+    path_X = [sensing_color_reflection(env, position[0], position[1])]
+    path_V = [0]
+    path_U = [0]
 
     for step in range(steps):
         x, y = position
         X = sensing_color_reflection(env, x, y)
-
         V = leaky_integrator.update(X)
+        U = X - V
         behavior = leaky_integrator.get_behavior(X)
 
         if behavior == "run":
@@ -111,6 +111,9 @@ def run_simulation(env_size, a, b, threshold, noise_level=0.1,
                 new_x, new_y = run(env_size, x, y, angle)
                 position = [new_x, new_y]
                 path.append(tuple(position))
+                path_X.append(X)
+                path_V.append(V)
+                path_U.append(U)
         else:
             angle = tumble(angle)
             for _ in range(base_run):
@@ -118,26 +121,31 @@ def run_simulation(env_size, a, b, threshold, noise_level=0.1,
                 new_x, new_y = run(env_size, x, y, angle)
                 position = [new_x, new_y]
                 path.append(tuple(position))
+                path_X.append(X)
+                path_V.append(V)
+                path_U.append(U)
 
-        U = X - V
-
-        X_values.append(X)
-        V_values.append(V)
-        U_values.append(U)
-        # Debugging output
         print(
             f"Step: {step}, X: {X:.2f}, V:{V:.2f}  U(t): {U},\
              Behavior: {behavior}")
 
-    return path, env, X_values, V_values, U_values
+    return path, env, path_X, path_V, path_U
 
 
-def update_plot(frame, path, scat, trajectory):
+def update_combined_plot(frame, path, scat, trajectory, line_x, line_v, line_u,
+                         X_values, V_values, U_values, threshold_line):
+    # Update simulation plot
     x, y = path[frame]
-    scat.set_offsets([y, x])  # Update position
-    trajectory.set_data([p[1] for p in path[:frame+1]], [p[0]
-                        for p in path[:frame+1]])  # Update path
-    return scat, trajectory
+    scat.set_offsets([y, x])
+    trajectory.set_data([p[1] for p in path[:frame+1]],
+                        [p[0] for p in path[:frame+1]])
+
+    # Update time series plot
+    line_x.set_data(range(frame+1), X_values[:frame+1])
+    line_v.set_data(range(frame+1), V_values[:frame+1])
+    line_u.set_data(range(frame+1), U_values[:frame+1])
+
+    return scat, trajectory, line_x, line_v, line_u
 
 
 if __name__ == '__main__':
@@ -150,6 +158,7 @@ if __name__ == '__main__':
     max_run = 5
     base_run = 1
     steps = 500
+    save_gif = True
 
     print("--"*50)
     print("E. coli Simulation (Run & Tumble)")
@@ -158,28 +167,50 @@ if __name__ == '__main__':
         env_size, a, b, threshold, noise_level, num_shades,
         steps, max_run, base_run)
 
-    fig, ax = plt.subplots()
-    ax.imshow(env, cmap='Greens', interpolation='nearest')
-    ax.set_title('Simulation E. coli (Run & Tumble)')
-    scat = ax.scatter([], [], color='red', s=50)
-    trajectory, = ax.plot([], [], color='blue', lw=1)
+    # Create a combined figure
+    fig = plt.figure(figsize=(10, 5))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, 1])
 
-    ani = FuncAnimation(fig, update_plot, frames=len(path), fargs=(path, scat,
-                                                                   trajectory),
-                        interval=60, repeat=False)
-    plt.show(block=False)
+    # Simulation plot
+    ax1 = fig.add_subplot(gs[:, 0])
+    ax1.imshow(env, cmap='Greens', interpolation='nearest')
+    ax1.set_title('Simulation E. coli (Run & Tumble)')
+    scat = ax1.scatter([], [], color='red', s=50)
+    trajectory, = ax1.plot([], [], color='blue', lw=1)
 
-    # Plot X, V, and U(t) over time
-    plt.figure()
-    plt.plot(X_values, label='X')
-    plt.plot(V_values, label='V')
-    plt.plot(U_values, label='U(t)')
-    plt.axhline(y=threshold, color='r', linestyle='--',
-                label='Threshold')  # Línea del threshold
-    plt.xlabel('Time (steps)')
-    plt.ylabel('Value')
-    plt.title('X, V, and U(t) over time')
-    plt.legend()
+    # Time series plot
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.set_title('X, V, and U(t) over time')
+    line_x, = ax2.plot([], [], label='X')
+    line_v, = ax2.plot([], [], label='V')
+    line_u, = ax2.plot([], [], label='U(t)')
+    threshold_line = ax2.axhline(y=threshold, color='r', linestyle='--',
+                                 label='Threshold')
+    ax2.legend()
+    ax2.set_xlim(0, len(X_values))
+    ax2.set_ylim(min(min(X_values), min(V_values), min(U_values))-0.05,
+                 max(max(X_values), max(V_values), max(U_values))+0.05)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Create animation
+    frame_skip = 3
+    ani = FuncAnimation(fig,
+                        update_combined_plot,
+                        frames=range(
+                            0, len(path), frame_skip), fargs=(
+                                path, scat, trajectory, line_x, line_v, line_u,
+                                X_values, V_values, U_values,
+                                threshold_line), interval=100, blit=True)
+
+    # Save as GIF
+    if save_gif:
+        print("Saving animation...")
+        writer = PillowWriter(fps=15)
+        ani.save("combined_animation.gif", writer=writer)
+        print("Animation saved as combined_animation.gif")
+
     plt.show(block=False)
 
     print("--"*50)
