@@ -3,6 +3,7 @@
 *.gif
 *.mp4
 *.jpeg
+*.webm
 # latex
 *.aux
 *.bbl
