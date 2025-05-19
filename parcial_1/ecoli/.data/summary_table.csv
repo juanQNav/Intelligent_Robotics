@@ -1,0 +1,4 @@
+Experiment,"Parameters (a, b, threshold)",Average Running Time (ms),Average Tumbling Time (ms),Final Concentration Reached (%),Time to Max Concentration (ms)
+1,"0.5, 0.5, 0.5",0.10450819672131154,0.10649350649350649,85.33333333333333,19.8
+2,"0.5, 0.5, 0.025",0.10763358778625981,0.10440251572327022,86.33333333333333,49.40000000000001
+3,"0.5, 0.5, 0.025",1.0,1.0,96.66666666666669,4.0

@@ -1,0 +1,26 @@
+# media
+*.png
+*.gif
+*.mp4
+*.jpeg
+# latex
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.gz
+*.bib
+*.tex
+# docs
+*.pdf
+*.txt
+# notebooks
+*.ipynb
+# data
+*.csv
+# vscode
+.vscode
+*.json

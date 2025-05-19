@@ -1,0 +1,16 @@
+step, gt_x, gt_y, b_x, b_y, b_prob, measurement, motion_x, motion_y, color, cell_changed, direction
+0, 0, 0, 0, 0, 0.02222222222222222, None, 0, 0, Color.WHITE, 0, 2
+1, 1, 0, 1, 1, 0.02515723270440251, white, 1, 0, Color.GREEN, 1, 2
+2, 2, 0, 2, 0, 0.07914653784219004, green, 1, 0, Color.WHITE, 1, 2
+3, 3, 0, 3, 0, 0.1043693101601675, white, 1, 0, Color.WHITE, 1, 2
+4, 4, 0, 4, 0, 0.1279629514619806, white, 1, 0, Color.WHITE, 1, 2
+5, 4, 1, 4, 1, 0.3986365729016266, yellow, 0, 1, Color.WHITE, 1, 1
+6, 3, 1, 3, 1, 0.4106022166843704, white, -1, 0, Color.WHITE, 1, 0
+7, 2, 1, 2, 1, 0.3713668576208795, white, -1, 0, Color.WHITE, 1, 0
+8, 1, 1, 1, 1, 0.3359666857307964, white, -1, 0, Color.WHITE, 1, 0
+9, 0, 1, 0, 1, 0.3202053100944549, white, -1, 0, Color.WHITE, 1, 0
+10, 0, 2, 0, 2, 0.2856937709158288, yellow, 0, 1, Color.GREEN, 1, 1
+11, 1, 2, 1, 2, 0.5433869354535553, green, 1, 0, Color.WHITE, 1, 2
+12, 2, 2, 1, 2, 0.598761912675394, white, 1, 0, Color.WHITE, 1, 2
+13, 2, 3, 1, 2, 0.5555746992667623, green, 1, 0, Color.WHITE, 1, 1
+14, 3, 3, 1, 2, 0.6023605122403803, white, 1, 0, Color.WHITE, 1, 2
