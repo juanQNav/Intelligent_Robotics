@@ -7,7 +7,7 @@ The repository is organized by partials and includes:
 
 In each partial we work with micropython to control Lego Ev3 and we use python to make simulations.
 
-### **Parcial 1**
+### **Partial 1**
 - **Interaction With Environment**
 - **Robotic Architectures**
 
