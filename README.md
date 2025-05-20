@@ -45,7 +45,7 @@ We implemented Markov Localization to estimate the robot's position on a known m
 </div>
 
 
-### **Parcial 3**
+### **Partial 3**
 - **Motion Planning**
 - **Decision Making**
 
