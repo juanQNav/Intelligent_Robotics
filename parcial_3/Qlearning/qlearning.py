@@ -1,8 +1,8 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.animation import FuncAnimation
-import pandas as pd
 
 # ==== World map ====
 world = [
@@ -34,6 +34,10 @@ rewards = np.full((45, 5), -1)  # Initialize rewards with -1
 
 
 class QAgent:
+    """
+    Q-learning agent for navigating a grid world.
+    This agent learns to navigate from a start location to an end location
+    """
     def __init__(self, alpha, gamma, location_to_state, actions, rewards,
                  state_to_location, Q):
         self.gamma = gamma
@@ -44,6 +48,7 @@ class QAgent:
         self.state_to_location = state_to_location
         self.Q = Q
         self.optimal_route = []
+        self.learn_progress = []
 
     def get_valid_actions(self, state):
         i, j = self.state_to_location[state]
@@ -76,10 +81,11 @@ class QAgent:
             return state
         return self.location_to_state[(i, j)]
 
-    def training(self, start_location, end_location, iterations):
+    def training(self, start_location, end_location,
+                 iterations, learn_progress_interval=100):
         end_state = self.location_to_state[end_location]
         rewards[end_state, 4] = 999  # Reward for reaching the goal
-        for _ in range(iterations):
+        for it in range(iterations):
             current_state = np.random.randint(0, len(self.state_to_location))
             valid_actions = self.get_valid_actions(current_state)
             if not valid_actions:
@@ -90,6 +96,10 @@ class QAgent:
             TD = reward + self.gamma * np.max(self.Q[next_state]) - \
                 self.Q[current_state, action]
             self.Q[current_state, action] += self.alpha * TD
+
+            if it % learn_progress_interval == 0:
+                max_reward = np.max(self.Q)
+                self.learn_progress.append(max_reward)
 
         # Compute optimal route
         route = [start_location]
@@ -132,7 +142,7 @@ def sense(p, world, measurement, sensor_right, sensor_wrong):
 
 def move(p, motion, p_move, p_stay):
     """
-
+    Update the belief state based on the motion vector and probabilities.
     """
     rows, cols = len(p), len(p[0])
     aux = [[0.0 for _ in range(cols)] for _ in range(rows)]
@@ -262,15 +272,50 @@ def lawnmower_vertical_reverse(current_pos):
                 return None  # Reached start, switch to down
 
 
-# ==== Visualization ====
-def location_to_coords(location):
-    return location  # location is already (i, j)
+# ==== Animation learning ====
+def animate_learning_progress(progress_data, step=5):
+    subsampled_data = progress_data[::step]
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_xlim(0, len(progress_data))
+    ax.set_ylim(0, max(progress_data) + 10)
+    ax.set_xlabel("Epochs")
+    ax.set_ylabel("Maximum Reward (Q)")
+    ax.set_title("Learning Progress (Q-learning)")
+
+    line, = ax.plot([], [], lw=2, color='cornflowerblue')
+    text = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+
+    def init():
+        line.set_data([], [])
+        text.set_text('')
+        return line, text
+
+    def update(frame):
+        x = list(range(0, frame * step + 1, step))
+        y = progress_data[:frame * step + 1:step]
+        line.set_data(x, y)
+        text.set_text(f"Max reward: {y[-1]:.2f}")
+        return line, text
+
+    ani = FuncAnimation(
+        fig,
+        update,
+        frames=len(subsampled_data),
+        init_func=init,
+        blit=True,
+        interval=15,
+        repeat=False
+    )
+    plt.tight_layout()
+    plt.grid(True)
+    plt.show(block=False)
+    return ani
 
 
 # ==== Trajectory Animation ====
 def create_trajectory_animation(gt_trajectory, b_trajectory, world):
     fig, ax = plt.subplots(figsize=(8, 6))
-    cmap = ListedColormap(['floralwhite', 'khaki',
+    cmap = ListedColormap(['ghostwhite', 'khaki',
                            'mediumseagreen', 'fuchsia'])
     ax.imshow(world, cmap=cmap, vmin=0, vmax=3)
     ax.set_xticks(np.arange(len(world[0])+1) - 0.5, [])
@@ -363,6 +408,50 @@ def create_belief_animation(belief_states):
     return anim
 
 
+def create_confidence_animation(belief_states,
+                                threshold=0.6) -> FuncAnimation:
+    from matplotlib.animation import FuncAnimation
+    import matplotlib.pyplot as plt
+
+    max_probs = [max(max(row) for row in state) for state in belief_states]
+    steps = range(len(max_probs))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_xlim(0, len(max_probs))
+    ax.set_ylim(0, 1.0)
+    ax.set_xlabel('Time Step')
+    ax.set_ylabel('Maximum Probability')
+    ax.axhline(y=threshold, color='r', linestyle='--',
+               label=f'Threshold ({threshold})')
+    ax.grid(True)
+    line, = ax.plot([], [], 'b-', linewidth=2, label='Localization Confidence')
+    point, = ax.plot([], [], 'go', markersize=10, label='Localized')
+    ax.legend()
+
+    def init():
+        line.set_data([], [])
+        point.set_data([], [])
+        return line, point
+
+    def update(frame):
+        x = list(steps[:frame + 1])
+        y = max_probs[:frame + 1]
+        line.set_data(x, y)
+
+        if y[-1] >= threshold and all(p < threshold for p in y[:-1]):
+            point.set_data([x[-1]], [y[-1]])
+        else:
+            point.set_data([], [])
+        return line, point
+
+    anim = FuncAnimation(fig, update, frames=len(max_probs),
+                         init_func=init, interval=500,
+                         blit=False, repeat=False)
+    plt.tight_layout()
+    plt.show(block=False)
+    return anim
+
+
 # ==== Main ====
 if __name__ == "__main__":
     # ==== Q-learning ====
@@ -372,14 +461,11 @@ if __name__ == "__main__":
     start = (3, 8)
     end = (3, 3)
 
-    agent.training(start, end, 1000)
+    agent.training(start, end, 5000, learn_progress_interval=1)
 
     print("Route found:", agent.optimal_route)
 
-    gt_trajectory = [location_to_coords(loc) for loc in agent.optimal_route]
-    anim = create_trajectory_animation(gt_trajectory=gt_trajectory,
-                                       b_trajectory=None,
-                                       world=world)
+    anim_learning = animate_learning_progress(agent.learn_progress, step=30)
     plt.pause(0.01)
     plt.show(block=False)
     input("Press Enter to close the animation...")
@@ -389,7 +475,7 @@ if __name__ == "__main__":
     df_q = pd.DataFrame(agent.Q, columns=['Up', 'Down', 'Left',
                                           'Right', 'Stop'])
     df_q.index.name = 'State'
-    df_q.to_csv('q_table.csv', index=True)
+    df_q.to_csv('results/q_table.csv', index=True)
     print("Q-table saved to 'q_table.csv'")
 
     # show the Q-table
@@ -486,5 +572,7 @@ if __name__ == "__main__":
     # Create and show the animation
     anim = create_trajectory_animation(gt_trajectory, b_trajectory, world)
     anim_belief = create_belief_animation(belief_states)
+    anim_confidence = create_confidence_animation(belief_states, threshold=0.6)
     plt.pause(0.01)
     input("Press enter to continue...")
+    plt.close('all')
