@@ -18,6 +18,7 @@
 # docs
 *.pdf
 *.txt
+*.md
 # notebooks
 *.ipynb
 # data
