@@ -275,7 +275,7 @@ def lawnmower_vertical_reverse(current_pos):
 # ==== Animation learning ====
 def animate_learning_progress(progress_data, step=5):
     subsampled_data = progress_data[::step]
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 5))
     ax.set_xlim(0, len(progress_data))
     ax.set_ylim(0, max(progress_data) + 10)
     ax.set_xlabel("Epochs")
@@ -314,7 +314,7 @@ def animate_learning_progress(progress_data, step=5):
 
 # ==== Trajectory Animation ====
 def create_trajectory_animation(gt_trajectory, b_trajectory, world):
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 5))
     cmap = ListedColormap(['ghostwhite', 'khaki',
                            'mediumseagreen', 'fuchsia'])
     ax.imshow(world, cmap=cmap, vmin=0, vmax=3)
@@ -380,7 +380,7 @@ def create_belief_animation(belief_states):
     """
     Create an animation of the belief distribution over time.
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 5))
 
     def update(frame):
         """
@@ -416,7 +416,7 @@ def create_confidence_animation(belief_states,
     max_probs = [max(max(row) for row in state) for state in belief_states]
     steps = range(len(max_probs))
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 5))
     ax.set_xlim(0, len(max_probs))
     ax.set_ylim(0, 1.0)
     ax.set_xlabel('Time Step')
@@ -460,7 +460,7 @@ if __name__ == "__main__":
 
     start = (3, 8)
     end = (3, 3)
-    save_anims = False
+    save_anims = True
 
     agent.training(start, end, 5000, learn_progress_interval=1)
 
