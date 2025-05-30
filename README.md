@@ -34,11 +34,11 @@ Then, the robot's behavior is determined by comparing the difference \( U(t) = X
 ### **Partial 2**
 - **Perception And Localization**
 
-We implemented Markov Localization to estimate the robot's position on a known map with unknown initial location. By updating a belief distribution based on sensor readings and movements, the robot gradually converges to its true position. The method was tested both in simulation and on a Lego EV3 robot using colored landmarks as references.
+We implemented **Markov Localization** to estimate the robot's position on a known map with unknown initial location. By updating a belief distribution based on sensor readings and movements, the robot gradually converges to its true position. The method was tested both in simulation and on a Lego EV3 robot using colored landmarks as references.
 
 <div align="center">
   <img src="multimedia/animation_localization.gif" alt="Markov Localization Simulation" width="800"/>
-  <p>Simulation of Marko's Localization algorithm</p>
+  <p>Simulation of Markov Localization algorithm</p>
 
   [![EV3 Localization](https://img.youtube.com/vi/xWVI8FGqY8Y/0.jpg)](https://youtu.be/xWVI8FGqY8Y)
   <p>Lego EV3 robot executing the algorithm</p>
@@ -48,5 +48,27 @@ We implemented Markov Localization to estimate the robot's position on a known m
 ### **Partial 3**
 - **Motion Planning**
 - **Decision Making**
+
+The objective is to simulate an intelligent robot navigating a known grid-world map. Initially, the robot
+learns a policy to reach a fixed goal position using **Q-learning**. Later, the robot is placed at an unknown
+location in the same map and must use **Markov Localization** to estimate its position. Once localization
+confidence is high, the robot switches to the learned **Q-policy** to move toward the goal autonomously.
+
+<div align="center">
+  <img src="multimedia/learning_progress.gif" alt="Learning progress" width="800"/>
+  <p>Learning progress of the robot over training episodes.</p>
+
+  <img src="multimedia/confidence_animation.gif" alt="Confidence" width="800"/>
+  <p>Localization confidence over time. The robot switches to the Q-policy after crossing the
+threshold.</p>
+
+  <img src="multimedia/belief_animation.gif" alt="Belief distribution" width="800"/>
+  <p>Belief distribution over the grid. The cell with the highest probability (darkest blue)
+indicates the robot’s estimated position.</p>
+
+  <img src="multimedia/trajectory_animation.gif" alt="Robot Trajectory" width="800"/>
+  <p>Robot trajectory (green = ground truth, blue = belief-based estimate).</p>
+</div>
+
 
 # Requirements

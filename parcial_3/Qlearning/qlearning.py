@@ -330,7 +330,7 @@ def create_trajectory_animation(gt_trajectory, b_trajectory, world):
     robot_point = ax.scatter([0], [0], c='black', s=100, label='Robot')
     step_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
     ax.legend(loc='upper right')
-    ax.set_title('Trayectoria del Robot')
+    ax.set_title('Robot Trajectory')
 
     def init():
         gt_line.set_data([], [])
@@ -460,15 +460,17 @@ if __name__ == "__main__":
 
     start = (3, 8)
     end = (3, 3)
+    save_anims = False
 
     agent.training(start, end, 5000, learn_progress_interval=1)
 
     print("Route found:", agent.optimal_route)
 
     anim_learning = animate_learning_progress(agent.learn_progress, step=30)
-    plt.pause(0.01)
-    plt.show(block=False)
     input("Press Enter to close the animation...")
+    if save_anims:
+        anim_learning.save('results/learning_progress.gif',
+                           writer='imagemagick')
     plt.close()
 
     # Save the Q-table to a CSV file
@@ -570,9 +572,17 @@ if __name__ == "__main__":
     print(f"size b_trajectory: {len(b_trajectory)}")
 
     # Create and show the animation
-    anim = create_trajectory_animation(gt_trajectory, b_trajectory, world)
+    anim_trajectory = create_trajectory_animation(gt_trajectory,
+                                                  b_trajectory, world)
     anim_belief = create_belief_animation(belief_states)
     anim_confidence = create_confidence_animation(belief_states, threshold=0.6)
-    plt.pause(0.01)
+
+    if save_anims:
+        anim_trajectory.save('results/trajectory_animation.gif',
+                             writer='imagemagick')
+        anim_belief.save('results/belief_animation.gif',
+                         writer='imagemagick')
+        anim_confidence.save('results/confidence_animation.gif',
+                             writer='imagemagick')
     input("Press enter to continue...")
     plt.close('all')
